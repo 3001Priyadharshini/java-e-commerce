@@ -1,0 +1,234 @@
+import java.util.*;
+
+// Product class representing items available for purchase
+class Product {
+    int id;
+    String name;
+    double price;
+
+    public Product(int id, String name, double price) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+    }
+
+    @Override
+    public String toString() {
+        return id + ". " + name + " - $" + price;
+    }
+}
+
+// CartItem class representing items added to the shopping cart
+class CartItem {
+    Product product;
+    int quantity;
+
+    public CartItem(Product product, int quantity) {
+        this.product = product;
+        this.quantity = quantity;
+    }
+
+    public double getTotalPrice() {
+        return product.price * quantity;
+    }
+
+    @Override
+    public String toString() {
+        return product.name + " x" + quantity + " - $" + getTotalPrice();
+    }
+}
+
+// User class representing a customer
+class User {
+    String username;
+    String password;
+    List<CartItem> cart;
+
+    public User(String username, String password) {
+        this.username = username;
+        this.password = password;
+        this.cart = new ArrayList<>();
+    }
+
+    // Add a product to the cart
+    public void addToCart(Product product, int quantity) {
+        CartItem cartItem = new CartItem(product, quantity);
+        cart.add(cartItem);
+        System.out.println(quantity + " x " + product.name + " added to the cart.");
+    }
+
+    // Display the cart
+    public void viewCart() {
+        if (cart.isEmpty()) {
+            System.out.println("Your cart is empty.");
+        } else {
+            System.out.println("\nYour Cart:");
+            for (CartItem item : cart) {
+                System.out.println(item);
+            }
+        }
+    }
+
+    // Checkout and calculate total amount
+    public void checkout() {
+        if (cart.isEmpty()) {
+            System.out.println("Your cart is empty. Add some products before checking out.");
+            return;
+        }
+        double total = 0;
+        System.out.println("\nOrder Summary:");
+        for (CartItem item : cart) {
+            System.out.println(item);
+            total += item.getTotalPrice();
+        }
+        System.out.println("Total: $" + total);
+        processPayment(total);
+        cart.clear();
+    }
+
+    // Simulate a payment process
+    private void processPayment(double amount) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("\nEnter payment amount: $");
+        double payment = scanner.nextDouble();
+        if (payment >= amount) {
+            System.out.println("Payment successful! Change returned: $" + (payment - amount));
+        } else {
+            System.out.println("Insufficient payment. Try again.");
+            processPayment(amount);
+        }
+    }
+}
+
+// E-commerce Application class
+public class EcommerceApp {
+    static Scanner scanner = new Scanner(System.in);
+    static List<Product> products = new ArrayList<>();
+    static Map<String, User> users = new HashMap<>();
+    static User currentUser = null;
+
+    public static void main(String[] args) {
+        initializeProducts();
+        while (true) {
+            System.out.println("\n1. Register\n2. Login\n3. Browse Products\n4. View Cart\n5. Checkout\n6. Exit");
+            System.out.print("Enter option: ");
+            int option = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            switch (option) {
+                case 1:
+                    registerUser();
+                    break;
+                case 2:
+                    loginUser();
+                    break;
+                case 3:
+                    browseProducts();
+                    break;
+                case 4:
+                    viewCart();
+                    break;
+                case 5:
+                    checkout();
+                    break;
+                case 6:
+                    System.out.println("Exiting...");
+                    return;
+                default:
+                    System.out.println("Invalid option. Try again.");
+            }
+        }
+    }
+
+    // Initialize the product catalog
+    public static void initializeProducts() {
+        products.add(new Product(1, "Laptop", 999.99));
+        products.add(new Product(2, "Smartphone", 499.99));
+        products.add(new Product(3, "Headphones", 199.99));
+        products.add(new Product(4, "Smartwatch", 149.99));
+        products.add(new Product(5, "Tablet", 299.99));
+    }
+
+    // User registration
+    public static void registerUser() {
+        System.out.print("Enter username: ");
+        String username = scanner.nextLine();
+        if (users.containsKey(username)) {
+            System.out.println("Username already exists. Try again.");
+            return;
+        }
+        System.out.print("Enter password: ");
+        String password = scanner.nextLine();
+        users.put(username, new User(username, password));
+        System.out.println("User registered successfully.");
+    }
+
+    // User login
+    public static void loginUser() {
+        System.out.print("Enter username: ");
+        String username = scanner.nextLine();
+        if (!users.containsKey(username)) {
+            System.out.println("User not found. Please register.");
+            return;
+        }
+        System.out.print("Enter password: ");
+        String password = scanner.nextLine();
+        User user = users.get(username);
+        if (user.password.equals(password)) {
+            currentUser = user;
+            System.out.println("Login successful. Welcome, " + username + "!");
+        } else {
+            System.out.println("Incorrect password. Try again.");
+        }
+    }
+
+    // Browse products and add to cart
+    public static void browseProducts() {
+        if (currentUser == null) {
+            System.out.println("Please login first.");
+            return;
+        }
+        System.out.println("\nAvailable Products:");
+        for (Product product : products) {
+            System.out.println(product);
+        }
+        System.out.print("\nEnter product ID to add to cart or 0 to cancel: ");
+        int productId = scanner.nextInt();
+        if (productId == 0) return;
+
+        Product selectedProduct = null;
+        for (Product product : products) {
+            if (product.id == productId) {
+                selectedProduct = product;
+                break;
+            }
+        }
+
+        if (selectedProduct == null) {
+            System.out.println("Invalid product ID.");
+            return;
+        }
+
+        System.out.print("Enter quantity: ");
+        int quantity = scanner.nextInt();
+        currentUser.addToCart(selectedProduct, quantity);
+    }
+
+    // View the cart
+    public static void viewCart() {
+        if (currentUser == null) {
+            System.out.println("Please login first.");
+            return;
+        }
+        currentUser.viewCart();
+    }
+
+    // Checkout process
+    public static void checkout() {
+        if (currentUser == null) {
+            System.out.println("Please login first.");
+            return;
+        }
+        currentUser.checkout();
+    }
+}
